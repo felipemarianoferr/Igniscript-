@@ -109,3 +109,31 @@ greenLight
     flash("Increasing speed...") pitStop
 redLight
 ```
+## Traducao para C
+
+```txt
+
+#include <stdio.h>
+
+int main() {
+    int rpm;
+    int alert;
+
+    scanf("%d", &rpm);
+
+    alert = 1;
+
+    if (rpm > 4000) {
+        printf("RPM too high!\n");
+        alert = 0; // false (carOff)
+    }
+
+    while (rpm < 6000) {
+        rpm = rpm + 500;
+        printf("Increasing speed...\n");
+    }
+
+    return 0;
+}
+
+```
