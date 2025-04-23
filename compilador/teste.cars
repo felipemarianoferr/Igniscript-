@@ -1,0 +1,15 @@
+greenLight
+
+ligado status tune carOn pitStop
+marcha horsepower tune 1 pitStop
+
+n horsepower tune 100 pitStop
+aux horsepower tune n gearUp 1 pitStop
+soma horsepower tune n accelerate aux pitStop
+soma tune soma clutch 2 pitStop
+
+flash("Soma de 1 a 100: soma") pitStop
+info() pitStop
+
+ligado status tune carOff pitStop
+redLight

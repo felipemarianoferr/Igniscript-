@@ -1,0 +1,16 @@
+greenLight
+
+ligado status tune carOn pitStop
+marcha horsepower tune 1 pitStop
+
+i horsepower tune 1 pitStop
+limite horsepower tune 10 pitStop
+
+duringEngineRev (i underride limite gearUp 1) greenLight
+    flash("Contando: i") pitStop
+    i tune i gearUp 1 pitStop
+redLight
+
+ligado status tune carOff pitStop
+
+redLight
