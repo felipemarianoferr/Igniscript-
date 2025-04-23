@@ -4,7 +4,7 @@ ligado status tune carOn pitStop
 marcha horsepower tune 1 pitStop
 
 n horsepower tune 100 pitStop
-aux horsepower tune n gearUp 1 pitStop
+aux horsepower tune n gearUp gearUp (1) pitStop
 soma horsepower tune n accelerate aux pitStop
 soma tune soma clutch 2 pitStop
 
