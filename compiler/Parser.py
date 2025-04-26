@@ -2,7 +2,7 @@ from compiler.Ast import *
 from compiler.Tokenizer import Tokenizer
 from compiler.SymbolTable import SymbolTable
 from compiler.PrePro import PrePro
-
+from compiler.CarState import CarState
 
 class Parser:
 
@@ -86,12 +86,10 @@ class Parser:
             Parser.tokenizer.selectNext()
             return identifier
 
-        # Changed from 'turbo' to 'gearUp' for unary +
         elif token.tipoToken == 'gearUp':
             Parser.tokenizer.selectNext()
             un_op = UnOp('+', [Parser.parseFactor()])
             return un_op
-        # Changed from 'brake' to 'gearDown' for unary -
         elif token.tipoToken == 'gearDown':
             Parser.tokenizer.selectNext()
             un_op = UnOp('-', [Parser.parseFactor()])
@@ -126,43 +124,33 @@ class Parser:
             raise Exception (f"Syntax Error: Unexpected token '{token.tipoToken}' value '{token.valorToken}' found when parsing factor")
 
     def parseBlock():
-        if Parser.tokenizer.next.tipoToken == 'greenLight':
-            Parser.tokenizer.selectNext()
-            block = Block('Block', [])
-            while Parser.tokenizer.next.tipoToken != 'redLight':
-                if Parser.tokenizer.next.tipoToken == 'EOF':
-                    raise Exception('Syntax Error: Expected "redLight" but found EOF')
-                if Parser.tokenizer.next.tipoToken == 'neutral':
-                     Parser.tokenizer.selectNext()
-                     if Parser.tokenizer.next.tipoToken != 'pitStop':
-                          raise Exception('Syntax Error: Expected "pitStop" after "neutral"')
-                     Parser.tokenizer.selectNext()
-                else:
-                    child = Parser.parseStatement()
-                    if not isinstance(child, NoOp):
-                        block.children.append(child)
+        Parser.tokenizer.selectNext()
+        block = Block('Block', [])
+        while Parser.tokenizer.next.tipoToken != 'redLight':
+            if Parser.tokenizer.next.tipoToken == 'EOF':
+                raise Exception('Syntax Error: Expected "redLight" but found EOF')
 
-            Parser.tokenizer.selectNext()
-            if len(block.children) == 0:
-                 return NoOp('NoOp', [])
+            if Parser.tokenizer.next.tipoToken == 'neutral':
+                 Parser.tokenizer.selectNext()
+                 if Parser.tokenizer.next.tipoToken != 'pitStop':
+                      raise Exception('Syntax Error: Expected "pitStop" after "neutral"')
+                 Parser.tokenizer.selectNext()
+            elif Parser.tokenizer.next.tipoToken == 'pitStop':
+                 Parser.tokenizer.selectNext()
+            else:
+                child = Parser.parseStatement()
+                if child is not None:
+                   block.children.append(child)
 
-            return block
-        else:
-             raise Exception('Syntax Error: Program must start with "greenLight"')
+        Parser.tokenizer.selectNext()
+        if len(block.children) == 0:
+             return NoOp('NoOp', [])
+
+        return block
+
 
     def parseStatement():
         token = Parser.tokenizer.next
-
-        if token.tipoToken == 'pitStop':
-            Parser.tokenizer.selectNext()
-            return NoOp('NoOp', [])
-
-        if token.tipoToken == 'neutral':
-             Parser.tokenizer.selectNext()
-             if Parser.tokenizer.next.tipoToken != 'pitStop':
-                  raise Exception('Syntax Error: Expected "pitStop" after "neutral"')
-             Parser.tokenizer.selectNext()
-             return NoOp('neutral', [])
 
         if token.tipoToken == 'identifier':
             identifier_node = Identifier(token.valorToken, [])
@@ -237,6 +225,8 @@ class Parser:
                 cond_node = Parser.parseBoolExpression()
                 if Parser.tokenizer.next.tipoToken == 'CLOSE':
                     Parser.tokenizer.selectNext()
+                    if Parser.tokenizer.next.tipoToken != 'greenLight':
+                        raise Exception('Syntax Error: Expected "greenLight" after duringEngineRev(...)')
                     block_node = Parser.parseBlock()
 
                     while_node = While('duringEngineRev', [cond_node, block_node])
@@ -253,12 +243,16 @@ class Parser:
                 cond_node = Parser.parseBoolExpression()
                 if Parser.tokenizer.next.tipoToken == 'CLOSE':
                     Parser.tokenizer.selectNext()
+                    if Parser.tokenizer.next.tipoToken != 'greenLight':
+                         raise Exception('Syntax Error: Expected "greenLight" after checkIgnition(...)')
                     if_block_node = Parser.parseBlock()
 
                     if_node = If('checkIgnition', [cond_node, if_block_node])
 
                     if Parser.tokenizer.next.tipoToken == 'backup':
                         Parser.tokenizer.selectNext()
+                        if Parser.tokenizer.next.tipoToken != 'greenLight':
+                             raise Exception('Syntax Error: Expected "greenLight" after backup')
                         else_block_node = Parser.parseBlock()
                         if_node.children.append(else_block_node)
 
@@ -276,7 +270,8 @@ class Parser:
                      Parser.tokenizer.selectNext()
                      if Parser.tokenizer.next.tipoToken == 'pitStop':
                           Parser.tokenizer.selectNext()
-                          return NoOp('info', [])
+
+                          return Info('info', [])
                      else:
                           raise Exception('Syntax Error: Expected "pitStop" after info()')
                  else:
@@ -306,14 +301,43 @@ class Parser:
             ast_node = bin_op
         return ast_node
 
+    @staticmethod
     def run(source):
+        initial_hp = 120.0
+        try:
+            hp_input = input("Enter initial horsepower (default 120): ")
+            if hp_input.strip():
+                 initial_hp = float(hp_input)
+                 if initial_hp <= 0:
+                      print("Warning: Horsepower must be positive. Using default 120.")
+                      initial_hp = 120.0
+            else:
+                 print("Using default horsepower 120.")
+                 initial_hp = 120.0
+        except ValueError:
+            print("Invalid horsepower input. Using default 120.")
+            initial_hp = 120.0
+        except EOFError:
+            print("No input received for horsepower. Using default 120.")
+            initial_hp = 120.0
+
+
         filtered_source = PrePro.filter(source)
         Parser.tokenizer = Tokenizer(filtered_source)
         st = SymbolTable({})
+        cs = CarState(initial_horsepower=initial_hp)
+
+        if Parser.tokenizer.next.tipoToken != 'greenLight':
+             raise Exception('Syntax Error: Program must start with "greenLight"')
+
         ast_root = Parser.parseBlock()
 
         if Parser.tokenizer.next.tipoToken != 'EOF':
             raise Exception (f"Syntax Error: Unconsumed tokens remaining starting with {Parser.tokenizer.next}")
 
-        result = ast_root.Evaluate(st)
-        return result
+        ast_root.Evaluate(st, cs)
+
+        if cs.ligado:
+            raise Exception("RuntimeError: Program finished with engine still 'carOn'.")
+
+        return None
