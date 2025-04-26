@@ -52,7 +52,7 @@ Com o objetivo de ensinar e incentivar pessoas que gostam de carros a aprender p
                      | <atribuicao>
                      | <impressao>
                      | <entrada>
-                     | <info>
+                     | <info> //falta implementar!!!
                      | <condicional>
                      | <repeticao>
                      | "neutral"
@@ -69,7 +69,7 @@ Com o objetivo de ensinar e incentivar pessoas que gostam de carros a aprender p
 
 <entrada>          ::= identifier "tune" "sensor()" "pitStop"
 
-<info>             ::= "info" "(" ")" "pitStop"
+<info>             ::= "info" "(" ")" "pitStop" // falta implementar!!
 
 <condicional>      ::= "checkIgnition" "(" <bexpr> ")" <bloco> [ "backup" <bloco> ]
 
@@ -89,8 +89,8 @@ Com o objetivo de ensinar e incentivar pessoas que gostam de carros a aprender p
                      | status
                      | plate
                      | identifier
-                     | "turbo" <fator>
-                     | "brake" <fator>
+                     | "gearUp" <fator>
+                     | "gearDown" <fator>
                      | "reverse" <fator>
                      | "(" <bexpr> ")"
                      | "sensor()"

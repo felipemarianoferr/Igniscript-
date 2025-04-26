@@ -15,38 +15,37 @@ class Tokenizer:
 
         self.keywords = {
             # Commands / Statements
-            "flash": "flash", # print
-            "sensor": "sensor", # read
+            "flash": "flash",
+            "sensor": "sensor",
             "info": "info",
-            "neutral": "neutral", # ; (empty command)
-            "tune": "tune", # =
-            "pitStop": "pitStop", # ;
-            "greenLight": "greenLight", # {
-            "redLight": "redLight", # }
-            "checkIgnition": "checkIgnition", # if
-            "backup": "backup", # else
-            "duringEngineRev": "duringEngineRev", # while
+            "neutral": "neutral",
+            "tune": "tune",
+            "pitStop": "pitStop",
+            "greenLight": "greenLight",
+            "redLight": "redLight",
+            "checkIgnition": "checkIgnition",
+            "backup": "backup",
+            "duringEngineRev": "duringEngineRev",
             # Types
-            "horsepower": "horsepower", # i32 (Used for type declaration)
-            "status": "status", # bool (Used for type declaration)
-            "plate": "plate", # str (Used for type declaration)
+            "horsepower": "horsepower",
+            "status": "status",
+            "plate": "plate",
             # Boolean Literals
-            "carOn": "carOn", # true
-            "carOff": "carOff", # false
-            # Operators handled in identifier check
-            "gearUp": "gearUp", # +
-            "gearDown": "gearDown", # -
+            "carOn": "carOn",
+            "carOff": "carOff",
+            # Operators (Unary 'turbo'/'brake' removed)
+            "gearUp": "gearUp", # Handles both unary and binary +
+            "gearDown": "gearDown", # Handles both unary and binary -
             "accelerate": "accelerate", # *
             "clutch": "clutch", # /
-            "turboBoost": "turboBoost", # ++ (string concat)
+            "turboBoost": "turboBoost", # ++
             "ignite": "ignite", # ||
             "traction": "traction", # &&
             "sameAs": "sameAs", # ==
             "overdrive": "overdrive", # >
             "underride": "underride", # <
-            "reverse": "reverse", # ! (unary logical not)
-            "turbo": "turbo",
-            "brake": "brake",
+            "reverse": "reverse", # !
+            # Removed 'turbo' and 'brake'
         }
         self.selectNext()
 
@@ -67,10 +66,8 @@ class Tokenizer:
             while self.position < len(self.source) and self.source[self.position] in self.num:
                 val += self.source[self.position]
                 self.position += 1
-            
             if self.position < len(self.source) and self.source[self.position].isalpha():
                  raise Exception(f"Syntax error: Invalid number format near '{val}{self.source[self.position]}'")
-            
             self.next = Token('horsepower_literal', int(val))
             return
 
@@ -83,7 +80,6 @@ class Tokenizer:
             if self.position >= len(self.source):
                 raise Exception("Unterminated string literal")
             self.position += 1
-            
             self.next = Token('plate_literal', val)
             return
 
@@ -99,34 +95,28 @@ class Tokenizer:
         if current_char.isalpha():
             val = current_char
             self.position += 1
-            # Allow letters, digits, underscore in identifiers
             while self.position < len(self.source) and (self.source[self.position].isalnum() or self.source[self.position] == '_'):
                 val += self.source[self.position]
                 self.position += 1
 
-            # Check if it's a keyword/type/literal
             if val in self.keywords:
                 token_type = self.keywords[val]
-                # Special handling for boolean literals to store actual boolean value
                 if token_type == 'carOn':
-                    self.next = Token('status_literal', True) # Treat carOn as bool True
+                    self.next = Token('status_literal', True)
                 elif token_type == 'carOff':
-                    self.next = Token('status_literal', False) # Treat carOff as bool False
-                # Use specific token types for language types when used as keywords
+                    self.next = Token('status_literal', False)
                 elif token_type == 'horsepower':
                      self.next = Token('TYPE_HORSEPOWER', val)
                 elif token_type == 'status':
                      self.next = Token('TYPE_STATUS', val)
                 elif token_type == 'plate':
                      self.next = Token('TYPE_PLATE', val)
-                # Handle sensor keyword - parser will check for ()
                 elif token_type == 'sensor':
                      self.next = Token('sensor', val)
                 else:
-                    # General keyword
                     self.next = Token(token_type, val)
             else:
-                self.next = Token('identifier', val) # Regular identifier
+                self.next = Token('identifier', val)
             return
 
         raise Exception(f"Unrecognised character: '{current_char}' at position {self.position}")

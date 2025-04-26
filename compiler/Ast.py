@@ -77,8 +77,9 @@ class BinOp(Node):
                  raise Exception(f"TypeError: Operator '>' (overdrive) only supports i32 (horsepower) or str (plate) comparison, not '{type1}' and '{type2}'")
 
         elif self.value == '++':
-             s1 = str(val1).lower() if type1 == 'bool' else str(val1)
-             s2 = str(val2).lower() if type2 == 'bool' else str(val2)
+             # Convert booleans to 'carOn'/'carOff' before string conversion for turboBoost
+             s1 = ('carOn' if val1 else 'carOff') if type1 == 'bool' else str(val1)
+             s2 = ('carOn' if val2 else 'carOff') if type2 == 'bool' else str(val2)
              return (s1 + s2, 'str')
 
 class UnOp(Node):
@@ -124,11 +125,13 @@ class Read(Node):
     def Evaluate(self, st):
         try:
              user_input = input()
+             # Attempt to return based on expected type? Or always i32?
+             # For now, keep as original, returning i32 for sensor()
              return (int(user_input), 'i32')
         except ValueError:
-             raise Exception("RuntimeError: Invalid input, expected an integer (horsepower).")
+             raise Exception("RuntimeError: Invalid input via sensor(), expected an integer (horsepower).")
         except EOFError:
-             raise Exception("RuntimeError: Input stream closed unexpectedly.")
+             raise Exception("RuntimeError: Input stream closed unexpectedly during sensor().")
 
 
 class Block(Node):
@@ -170,15 +173,18 @@ class StrVal(Node):
 
 class VarDec(Node):
     def Evaluate(self, st):
-        if len(self.children) != 2:
-             raise Exception(f"Internal Error: VarDec node expected 2 children, got {len(self.children)}")
-
-        identifier_node = self.children[0]
-        expression_node = self.children[1]
         igniscript_type = self.value
+        identifier_node = self.children[0]
 
-        value_tuple = expression_node.Evaluate(st)
-        st.create_variable(identifier_node.value, value_tuple, igniscript_type)
+        if len(self.children) == 1: # Handle declaration only: identifier type pitStop
+            st.create_variable(identifier_node.value, None, igniscript_type)
+        elif len(self.children) == 2: # Handle declaration with assignment: identifier type tune expr pitStop
+            expression_node = self.children[1]
+            value_tuple = expression_node.Evaluate(st)
+            st.create_variable(identifier_node.value, value_tuple, igniscript_type)
+        else:
+             # This case should ideally not be reached if the parser is correct
+             raise Exception(f"Internal Error: VarDec node expected 1 or 2 children, got {len(self.children)}")
 
 class NoOp(Node):
     def Evaluate(self, st):

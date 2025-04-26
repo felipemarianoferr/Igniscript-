@@ -86,11 +86,13 @@ class Parser:
             Parser.tokenizer.selectNext()
             return identifier
 
-        elif token.tipoToken == 'turbo':
+        # Changed from 'turbo' to 'gearUp' for unary +
+        elif token.tipoToken == 'gearUp':
             Parser.tokenizer.selectNext()
             un_op = UnOp('+', [Parser.parseFactor()])
             return un_op
-        elif token.tipoToken == 'brake':
+        # Changed from 'brake' to 'gearDown' for unary -
+        elif token.tipoToken == 'gearDown':
             Parser.tokenizer.selectNext()
             un_op = UnOp('-', [Parser.parseFactor()])
             return un_op
@@ -137,7 +139,8 @@ class Parser:
                      Parser.tokenizer.selectNext()
                 else:
                     child = Parser.parseStatement()
-                    block.children.append(child)
+                    if not isinstance(child, NoOp):
+                        block.children.append(child)
 
             Parser.tokenizer.selectNext()
             if len(block.children) == 0:
@@ -169,6 +172,15 @@ class Parser:
                 var_type_token = Parser.tokenizer.next
                 Parser.tokenizer.selectNext()
 
+                if var_type_token.tipoToken == 'TYPE_HORSEPOWER':
+                     type_str = 'horsepower'
+                elif var_type_token.tipoToken == 'TYPE_STATUS':
+                     type_str = 'status'
+                elif var_type_token.tipoToken == 'TYPE_PLATE':
+                     type_str = 'plate'
+                else:
+                     raise Exception(f"Internal Error: Unexpected type token {var_type_token.tipoToken}")
+
                 if Parser.tokenizer.next.tipoToken == 'tune':
                     Parser.tokenizer.selectNext()
                     expr_node = Parser.parseBoolExpression()
@@ -177,19 +189,15 @@ class Parser:
                         raise Exception('Syntax Error: Expected "pitStop" after assignment expression')
                     Parser.tokenizer.selectNext()
 
-                    if var_type_token.tipoToken == 'TYPE_HORSEPOWER':
-                         type_str = 'horsepower'
-                    elif var_type_token.tipoToken == 'TYPE_STATUS':
-                         type_str = 'status'
-                    elif var_type_token.tipoToken == 'TYPE_PLATE':
-                         type_str = 'plate'
-                    else:
-                         raise Exception(f"Internal Error: Unexpected type token {var_type_token.tipoToken}")
-
                     var_decl = VarDec(type_str, [identifier_node, expr_node])
                     return var_decl
+
+                elif Parser.tokenizer.next.tipoToken == 'pitStop':
+                     Parser.tokenizer.selectNext()
+                     var_decl = VarDec(type_str, [identifier_node])
+                     return var_decl
                 else:
-                    raise Exception(f'Syntax Error: Expected "tune" after type "{var_type_token.valorToken}"')
+                     raise Exception(f'Syntax Error: Expected "tune" or "pitStop" after type "{var_type_token.valorToken}"')
 
             elif Parser.tokenizer.next.tipoToken == 'tune':
                 Parser.tokenizer.selectNext()
@@ -277,7 +285,8 @@ class Parser:
                  raise Exception ("Syntax Error: Expected '(' after 'info'")
 
         else:
-            raise Exception(f'Syntax Error: Unexpected token "{token.tipoToken}" when expecting a statement')
+            raise Exception(f'Syntax Error: Unexpected token "{token.tipoToken}" value "{token.valorToken}" when expecting a statement')
+
 
     def parseExpression():
         ast_node = Parser.parseTerm()
