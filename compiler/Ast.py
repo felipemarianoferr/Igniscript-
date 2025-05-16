@@ -1,4 +1,3 @@
-
 from compiler.Code import Code
 
 class Node():
@@ -86,17 +85,22 @@ class Identifier(Node):
 
 class Print(Node):
     def Evaluate(self, st, cs):
-        pass
+        val, tipo = self.children[0].Evaluate(st, cs)
+        print(val)
 
     def Generate(self, st):
-        pass
+        self.children[0].Generate(st)  # Garante que o valor a ser impresso está em eax
+        Code.append("push eax")
+        Code.append("push format_out")
+        Code.append("call printf")
+        Code.append("add esp, 8")
 
 class IntVal(Node):
     def Evaluate(self, st, cs):
         return (self.value, 'i32')
 
     def Generate(self, st):
-        pass
+        Code.append(f"mov eax, {self.value}")
 
 class BoolVal(Node):
     def Evaluate(self, st, cs):
@@ -110,7 +114,8 @@ class StrVal(Node):
         return (self.value, 'str')
 
     def Generate(self, st):
-        pass
+        # Ainda não usado
+        raise NotImplementedError("StrVal.Generate() ainda não implementado.")
 
 class VarDec(Node):
     def Evaluate(self, st, cs):

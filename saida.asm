@@ -20,6 +20,11 @@ _start:
     call scanf
     add esp, 8
 
+mov eax, 1
+push eax
+push format_out
+call printf
+add esp, 8
 
     mov eax, 1
     xor ebx, ebx
