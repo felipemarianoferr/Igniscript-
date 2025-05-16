@@ -3,6 +3,7 @@ from compiler.Tokenizer import Tokenizer
 from compiler.SymbolTable import SymbolTable
 from compiler.PrePro import PrePro
 from compiler.CarState import CarState
+from compiler.Code import Code
 
 class Parser:
 
@@ -301,19 +302,18 @@ class Parser:
             ast_node = bin_op
         return ast_node
 
-    @staticmethod
-    def run(source):
+    def run(source, output_filename):
         initial_hp = 120.0
         try:
             hp_input = input("Enter initial horsepower (default 120): ")
             if hp_input.strip():
-                 initial_hp = float(hp_input)
-                 if initial_hp <= 0:
-                      print("Warning: Horsepower must be positive. Using default 120.")
-                      initial_hp = 120.0
+                initial_hp = float(hp_input)
+                if initial_hp <= 0:
+                    print("Warning: Horsepower must be positive. Using default 120.")
+                    initial_hp = 120.0
             else:
-                 print("Using default horsepower 120.")
-                 initial_hp = 120.0
+                print("Using default horsepower 120.")
+                initial_hp = 120.0
         except ValueError:
             print("Invalid horsepower input. Using default 120.")
             initial_hp = 120.0
@@ -321,23 +321,39 @@ class Parser:
             print("No input received for horsepower. Using default 120.")
             initial_hp = 120.0
 
-
         filtered_source = PrePro.filter(source)
         Parser.tokenizer = Tokenizer(filtered_source)
         st = SymbolTable({})
         cs = CarState(initial_horsepower=initial_hp)
 
         if Parser.tokenizer.next.tipoToken != 'greenLight':
-             raise Exception('Syntax Error: Program must start with "greenLight"')
+            raise Exception('Syntax Error: Program must start with "greenLight"')
 
         ast_root = Parser.parseBlock()
 
-        if Parser.tokenizer.next.tipoToken != 'EOF':
-            raise Exception (f"Syntax Error: Unconsumed tokens remaining starting with {Parser.tokenizer.next}")
+        # ✅ Validação do AST para etapa atual (ids e Generate)
+        def walk_ast(node):
+            assert hasattr(node, "id"), f"Nó {type(node).__name__} não tem id"
+            assert hasattr(node, "Generate"), f"Nó {type(node).__name__} não tem Generate"
+            for child in node.children:
+                walk_ast(child)
 
+        walk_ast(ast_root)
+        print("✅ AST construída com sucesso com IDs e métodos Generate disponíveis.")
+
+        if Parser.tokenizer.next.tipoToken != 'EOF':
+            raise Exception(f"Syntax Error: Unconsumed tokens remaining starting with {Parser.tokenizer.next}")
+
+        # Execução do interpretador (modo Evaluate)
         ast_root.Evaluate(st, cs)
 
         if cs.ligado:
             raise Exception("RuntimeError: Program finished with engine still 'carOn'.")
+
+        # Geração de código Assembly
+        Code.header()
+        ast_root.Generate(st)
+        Code.footer()
+        Code.dump(output_filename)
 
         return None
