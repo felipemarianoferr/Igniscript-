@@ -1,97 +1,97 @@
 # Igniscript
 
-Igniscript e uma linguagem de programacao que utiliza conceitos tradicionais de logica, atribuicao, controle de fluxo e entrada/saida para programar o comportamento do painel de um carro.
+Igniscript is a programming language that uses traditional concepts of logic, assignment, control flow, and input/output to program the behavior of a car’s dashboard.
 
-O programa interage com atributos do carro como velocidade, RPM, marcha, entre outros, e deve gerenciar recursos como gasolina, respeitar limites mecanicos e responder a condicoes como o motor estar ligado ou nao.
+The program interacts with car attributes such as speed, RPM, gear, among others, and must manage resources like fuel, respect mechanical limits, and respond to conditions such as whether the engine is on or off.
 
-Com o objetivo de ensinar e incentivar pessoas que gostam de carros a aprender programacao, Igniscript adota um linguajar simples e familiar, transformando conceitos tecnicos em comandos intuitivos. Ao usar combustivel como recurso limitado, ela estimula o pensamento logico com foco na eficiencia. No processo, a linguagem continua com potencial como uma ferramenta para resolver problemas computacionais, exemplo no final da pagina.
-
----
-## O carro possui o seguinte estado interno:
-
-- `gasolina` (100 litros)  cada operacao consome 1 litro
-- `rpm`
-- `velocidade`
-- `ligado` (carOn ou carOff)
-- `marcha`
-- `cavalos` (potencia do motor  influencia a velocidade de execucao)
-
-## Regras de execucao
-
-- Cada operacao computacional (binaria, unaria, laco, condicional) consome:
-  - +100 RPM
-  - -1 litro de gasolina
-
-- o carro comeca com 120 cavalos (quanto mais cavalos menor e o tempo para compilar.)
-- e possivel aumentar a cavalaria do carro, mas isso gasta mais gasolina por operacao.
-
-- O `rpm` nao pode ser alterado diretamente pelo programador.
-- O programador e responsavel por trocar de marcha usando `marcha tune marcha gearUp 1`.
-
-### Limites de RPM por marcha
-
-| Marcha | RPM Maximo | Operacoes permitidas |
-|--------|------------|----------------------|
-| 1      | 2000       | 20                   |
-| 2      | 4000       | 20                   |
-| 3      | 6000       | 20                   |
-| 4      | 8000       | 20                   |
-| 5      | 10000      | 20                   |
-
-- Se ultrapassar o RPM da marcha atual, o programa encerra com erro.
-- Se acabar a gasolina, o carro desliga imediatamente.
+With the aim of teaching and encouraging car enthusiasts to learn programming, Igniscript adopts simple and familiar language, turning technical concepts into intuitive commands. By using fuel as a limited resource, it stimulates logical thinking with a focus on efficiency. In the process, the language still has potential as a tool for solving computational problems, as shown in the example at the end of the page.
 
 ---
+## The car has the following internal state:
 
-## EBNF da Igniscript
+- `gasoline` (100 liters)  each operation consumes 1 liter  
+- `rpm`  
+- `speed`  
+- `on` (carOn or carOff)  
+- `gear`  
+- `horsepower` (engine power influences execution speed)  
+
+## Execution rules
+
+- Each computational operation (binary, unary, loop, conditional) consumes:  
+  - +100 RPM  
+  - -1 liter of gasoline  
+
+- The car starts with 120 horsepower (the more horsepower, the shorter the compile time).  
+- It is possible to increase the car’s horsepower, but this consumes more gasoline per operation.
+
+- `rpm` cannot be altered directly by the programmer.  
+- The programmer is responsible for shifting gears using `gear tune gear gearUp 1`.  
+
+### RPM Limits per gear
+
+| Gear | Max RPM | Allowed operations |
+|------|---------|--------------------|
+| 1    | 2000    | 20                 |
+| 2    | 4000    | 20                 |
+| 3    | 6000    | 20                 |
+| 4    | 8000    | 20                 |
+| 5    | 10000   | 20                 |
+
+- If the RPM of the current gear is exceeded, the program terminates with an error.  
+- If the fuel runs out, the car shuts off immediately.  
+
+---
+
+## Igniscript EBNF
 
 ```ebnf
-<programa>         ::= { <instrucao> }
+<program>           ::= { <instruction> }
 
-<instrucao>        ::= <declaracao>
-                     | <atribuicao>
-                     | <impressao>
-                     | <entrada>
-                     | <info> //falta implementar!!!
-                     | <condicional>
-                     | <repeticao>
+<instruction>       ::= <declaration>
+                     | <assignment>
+                     | <print>
+                     | <input>
+                     | <info> // not implemented yet!!!
+                     | <conditional>
+                     | <loop>
                      | "neutral"
 
-<bloco>            ::= "greenLight" { <instrucao> } "redLight"
+<block>             ::= "greenLight" { <instruction> } "redLight"
 
-<declaracao>       ::= identifier "horsepower"
+<declaration>       ::= identifier "horsepower"
                      | identifier "plate"
                      | identifier "status"
 
-<atribuicao>       ::= identifier "tune" <bexpr> "pitStop"
+<assignment>        ::= identifier "tune" <bexpr> "pitStop"
 
-<impressao>        ::= "flash" "(" <bexpr> ")" "pitStop"
+<print>             ::= "flash" "(" <bexpr> ")" "pitStop"
 
-<entrada>          ::= identifier "tune" "sensor()" "pitStop"
+<input>             ::= identifier "tune" "sensor()" "pitStop"
 
-<info>             ::= "info" "(" ")" "pitStop" // falta implementar!!
+<info>              ::= "info" "(" ")" "pitStop"  // not implemented yet!!!
 
-<condicional>      ::= "checkIgnition" "(" <bexpr> ")" <bloco> [ "backup" <bloco> ]
+<conditional>       ::= "checkIgnition" "(" <bexpr> ")" <block> [ "backup" <block> ]
 
-<repeticao>        ::= "duringEngineRev" "(" <bexpr> ")" <bloco>
+<loop>              ::= "duringEngineRev" "(" <bexpr> ")" <block>
 
-<bexpr>            ::= <bterm> { "ignite" <bterm> }
+<bexpr>             ::= <bterm> { "ignite" <bterm> }
 
 <bterm>            ::= <relExpr> { "traction" <relExpr> }
 
-<relExpr>          ::= <expr> ( "sameAs" | "overdrive" | "underride" ) <expr>
+<relExpr>           ::= <expr> ( "sameAs" | "overdrive" | "underride" ) <expr>
 
-<expr>             ::= <termo> { ("gearUp" | "gearDown" | "turboBoost") <termo> }
+<expr>              ::= <term> { ("gearUp" | "gearDown" | "turboBoost") <term> }
 
-<termo>            ::= <fator> { ("accelerate" | "clutch") <fator> }
+<term>              ::= <factor> { ("accelerate" | "clutch") <factor> }
 
-<fator>            ::= horsepower
+<factor>            ::= horsepower
                      | status
                      | plate
                      | identifier
                      | "gearUp" <fator>
-                     | "gearDown" <fator>
-                     | "reverse" <fator>
+                     | "gearDown" <factor>
+                     | "reverse" <factor>
                      | "(" <bexpr> ")"
                      | "sensor()"
 
@@ -101,82 +101,74 @@ Com o objetivo de ensinar e incentivar pessoas que gostam de carros a aprender p
 
 <number>            ::= [ "-" ] <digit> { <digit> }
 
-<string>            ::= "\""" {{ qualquer_caractere_que_nao_seja_aspas }} "\"""
+<string>            ::= "\"" {{ any_character_except_quote }} "\""
 
 <id>                ::= <letter> {{ <letter> | <digit> | "_" }}
 
 <letter>            ::= "a" | ... | "z" | "A" | ... | "Z"
 <digit>             ::= "0" | ... | "9"
- 
-```
 
----
+| Traditional lexical type | Token in Igniscript            |   |                   |
+| ------------------------ | ------------------------------ | - | ----------------- |
+| i32                      | horsepower                     |   |                   |
+| bool                     | status                         |   |                   |
+| str                      | plate                          |   |                   |
+| true / false             | carOn / carOff                 |   |                   |
+| =                        | tune                           |   |                   |
+| ;                        | pitStop                        |   |                   |
+| + / -                    | gearUp / gearDown              |   |                   |
+| \* / /                   | accelerate / clutch            |   |                   |
+| ++                       | turboBoost                     |   |                   |
+| !                        | reverse                        |   |                   |
+| && /                     |                                |   | traction / ignite |
+| == / < / >               | sameAs / underride / overdrive |   |                   |
+| if / else                | checkIgnition / backup         |   |                   |
+| while                    | duringEngineRev                |   |                   |
+| { / }                    | greenLight / redLight          |   |                   |
+| print(...)               | flash(...)                     |   |                   |
+| read()                   | sensor()                       |   |                   |
+| ; (empty command)        | neutral                        |   |                   |
+| info()                   | info()                         |   |                   |
 
-## Tabela de Equivalencia Lexical
+Proposed challenge: The Gauss Challenge
+Objective: to teach programming using an alphabet familiar to car enthusiasts, encouraging the use of an optimal solution.
 
-| Tipo lexico tradicional | Token na Igniscript            |
-|-------------------------|--------------------------------|
-| i32                     | horsepower                     |
-| bool                    | status                         |
-| str                     | plate                          |
-| true / false            | carOn / carOff                 |
-| =                       | tune                           |
-| ;                       | pitStop                        |
-| + / -                   | gearUp / gearDown              |
-| * / /                   | accelerate / clutch            |
-| ++                      | turboBoost                     |
-| !                       | reverse                        |
-| && / ||                 | traction / ignite              |
-| == / < / >              | sameAs / underride / overdrive |
-| if / else               | checkIgnition / backup         |
-| while                   | duringEngineRev                |
-| { / }                   | greenLight / redLight          |
-| print(...)              | flash(...)                     |
-| read()                  | sensor()                       |
-| ; (comando vazio)       | neutral                        |
-| info()                  | info()                         |
+Write an Igniscript program to calculate the sum of all numbers from 1 to 100 and display the result.
 
----
+The correct result should be: 5050.
 
-## Desafio proposto: O Desafio de Gauss. Objetivo: ensinar a programar utilizando um alfabeto familiar para quem gosta de carros, incentivando o uso de uma solucao otima.
+Constraints:
 
-Programe a Igniscript para calcular a soma de todos os numeros de 1 a 100, e exibir o resultado.
+You may use at most 5 computational operations (i.e., consume at most 5 liters of gasoline and 500 RPM).
 
-O resultado correto deve ser: 5050.
+The program must end with:
 
-Restricoes:
-- Voce pode usar no maximo 5 operacoes computacionais (i.e. consumir no maximo 5 litros de gasolina e 500 RPM)
-- O programa deve terminar com:
-  - Pelo menos 95 litros de gasolina
-  - RPM inferior a 2000
-  - Na primeira marcha
-  - Desligar o carro apos uso
+At least 95 liters of gasoline
 
-Dica:
-- Fazer soma numero a numero com `duringEngineRev` acaba com a gasolina do carro.
-- Aplique uma solucao matematica otimizada, pesquise sobre formula de Gauss:
+RPM below 2000
 
----
+In first gear
 
-## Exemplo de solucao correta
+Turn off the car after use
 
-```car
+Tip:
+
+Summing number by number with duringEngineRev uses up the car's gasoline.
+
+Apply an optimized mathematical solution, research the Gauss formula:
 
 greenLight
 
-ligado status tune carOn pitStop
-marcha horsepower tune 1 pitStop
+on status tune carOn pitStop
+gear horsepower tune 1 pitStop
 
 n horsepower tune 100 pitStop
 aux horsepower tune n gearUp 1 pitStop
-soma horsepower tune n accelerate aux pitStop
-soma tune soma clutch 2 pitStop
+sum horsepower tune n accelerate aux pitStop
+sum tune sum clutch 2 pitStop
 
-flash("Soma de 1 a 100: soma") pitStop
+flash("Sum of 1 to 100: sum") pitStop
 info() pitStop
 
-ligado status tune carOff pitStop
+on status tune carOff pitStop
 redLight
-
-
-```
